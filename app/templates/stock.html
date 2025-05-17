@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section id="stock-details-hero">
+    <h1>{{ title | default("Stock Details") }}</h1>
+    <p>Detailed analysis for {{ symbol | upper }}.</p>
+</section>
+
+<section id="stock-chart-section">
+    <h2>{{ symbol | upper }} Candlestick Chart</h2>
+    <div class="chart-controls">
+        <label for="periodSelect">Select Period:</label>
+        <select id="periodSelect" onchange="updateStockChart('{{ symbol | upper }}')">
+            <option value="1mo">1 Month</option>
+            <option value="3mo">3 Months</option>
+            <option value="1y" selected>1 Year</option>
+            <option value="5y">5 Years</option>
+            <option value="max">Max</option>
+        </select>
+    </div>
+    <div id="stockChartContainer" style="width:100%;height:500px;">
+        <!-- Plotly chart will be rendered here by JavaScript -->
+        <p>Loading chart data for {{ symbol | upper }}...</p>
+    </div>
+    {% if data_summary %}
+        <h3>Raw Data Summary (Passed from Server)</h3>
+        <div class="data-summary">
+             {{ data_summary | safe }} 
+        </div>
+    {% endif %}
+</section>
+
+<section id="sentiment-widget-section">
+    <h2>News Sentiment for {{ symbol | upper }}</h2>
+    <div id="stockNewsSentimentResults">
+        <p>Loading news sentiment...</p>
+    </div>
+</section>
+
+<!-- Include the main charts.js file -->
+<script src="{{ url_for('static', path='/js/charts.js') }}"></script>
+<script>
+    // Initial chart load when the page is ready
+    document.addEventListener('DOMContentLoaded', function() {
+        const symbol = "{{ symbol | upper }}";
+        updateStockChart(symbol);
+        fetchStockNewsSentiment(symbol); // Fetch news sentiment for this specific stock
+    });
+
+    async function fetchStockNewsSentiment(stockSymbol) {
+        const resultsDiv = document.getElementById('stockNewsSentimentResults');
+        resultsDiv.innerHTML = '<p>Loading news sentiment for ' + stockSymbol + '...</p>';
+
+        try {
+            const response = await fetch(`${APP_CONFIG.apiBaseUrl}/sentiment/news?query=${encodeURIComponent(stockSymbol)}`);
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || `Error: ${response.status}`);
+            }
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                let html = '<ul>';
+                data.slice(0, 5).forEach(article => { // Show top 5 articles
+                    html += `<li>
+                        <strong>${article.title}</strong> (${article.source})<br>
+                        Sentiment: ${article.sentiment} (Score: ${article.sentiment_score})
+                        <a href="${article.url}" target="_blank" rel="noopener noreferrer">Read article</a>
+                    </li>`;
+                });
+                html += '</ul>';
+                resultsDiv.innerHTML = html;
+            } else {
+                resultsDiv.innerHTML = '<p>No recent news sentiment found for ' + stockSymbol + '.</p>';
+            }
+        } catch (error) {
+            console.error("Failed to fetch stock news sentiment:", error);
+            resultsDiv.innerHTML = `<p>Error fetching news sentiment: ${error.message}</p>`;
+        }
+    }
+
+</script>
+{% endblock %} 

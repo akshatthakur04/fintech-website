@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+aiohttp
+pandas
+jinja2
+plotly
+python-dotenv
+# Add other necessary packages like requests, beautifulsoup4, nltk, etc. 

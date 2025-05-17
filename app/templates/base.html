@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title | default("Fintech Website") }} - {{ config.PROJECT_NAME if config else "Fintech App" }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <!-- Include Plotly.js if you plan to use it for client-side rendering -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script>
+        // Global config accessible to JS, like API base URLs or other settings
+        const APP_CONFIG = {
+            apiBaseUrl: "/api"  // Simplified API base URL
+        };
+    </script>
+</head>
+<body>
+    <nav>
+        <div class="container">
+            <a href="/" class="brand">{{ config.PROJECT_NAME if config else "Fintech App"}}</a>
+            <ul>
+                <li><a href="/">Dashboard</a></li>
+                <!-- Use direct links instead of url_for -->
+                <li><a href="/api/stocks/stock/AAPL">AAPL</a></li> 
+                <li><a href="/api/stocks/stock/MSFT">MSFT</a></li> 
+                <li><a href="/api/health">API Health</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}
+        <!-- Default content if no block is provided by child template -->
+        <p>Welcome to the Fintech Application.</p>
+        {% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; {{ "now"|date("%Y") }} {{ config.PROJECT_NAME if config else "My Company" }}. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Common JavaScript file for all pages -->
+    <!-- You might include charts.js here or on specific pages that need it -->
+    <!-- <script src="{{ url_for('static', path='/js/charts.js') }}"></script> -->
+</body>
+</html> 

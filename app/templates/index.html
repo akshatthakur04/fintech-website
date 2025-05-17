@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section id="dashboard-hero">
+    <h1>Welcome to the {{ title }}</h1>
+    <p>Your one-stop platform for financial insights and analysis.</p>
+</section>
+
+<section id="stock-search">
+    <h2>Search Stock</h2>
+    <form id="stockSearchForm" onsubmit="return redirectToStockPage();">
+        <input type="text" id="stockSymbolInput" name="symbol" placeholder="Enter Stock Symbol (e.g., AAPL)" required>
+        <button type="submit">View Analysis</button>
+    </form>
+</section>
+
+<section id="popular-stocks">
+    <h2>Popular Stocks</h2>
+    <div class="stock-list">
+        <!-- Using direct links instead of url_for -->
+        <div class="stock-item"><a href="/api/stocks/stock/AAPL">Apple Inc. (AAPL)</a></div>
+        <div class="stock-item"><a href="/api/stocks/stock/MSFT">Microsoft Corp. (MSFT)</a></div>
+        <div class="stock-item"><a href="/api/stocks/stock/GOOGL">Alphabet Inc. (GOOGL)</a></div>
+        <div class="stock-item"><a href="/api/stocks/stock/AMZN">Amazon.com Inc. (AMZN)</a></div>
+        <div class="stock-item"><a href="/api/stocks/stock/TSLA">Tesla, Inc. (TSLA)</a></div>
+    </div>
+</section>
+
+<section id="market-news-sentiment">
+    <h2>Market News Sentiment</h2>
+    <form id="newsSentimentForm">
+        <input type="text" id="newsQueryInput" name="query" placeholder="Enter topic for news (e.g., tech stocks)">
+        <button type="button" onclick="fetchAndDisplayNewsSentiment()">Fetch News Sentiment</button>
+    </form>
+    <div id="newsSentimentResults">
+        <!-- News sentiment will be loaded here by JavaScript -->
+        <p>Enter a topic above to see news sentiment.</p>
+    </div>
+</section>
+
+<script>
+function redirectToStockPage() {
+    const symbol = document.getElementById('stockSymbolInput').value.toUpperCase();
+    if (symbol) {
+        window.location.href = `/api/stocks/stock/${symbol}`;
+    }
+    return false; // Prevent default form submission
+}
+
+async function fetchAndDisplayNewsSentiment() {
+    const query = document.getElementById('newsQueryInput').value;
+    const resultsDiv = document.getElementById('newsSentimentResults');
+    resultsDiv.innerHTML = '<p>Loading news sentiment...</p>';
+
+    if (!query) {
+        resultsDiv.innerHTML = '<p>Please enter a topic to search for news sentiment.</p>';
+        return;
+    }
+
+    try {
+        // Use APP_CONFIG.apiBaseUrl defined in base.html
+        const response = await fetch(`${APP_CONFIG.apiBaseUrl}/sentiment/news?query=${encodeURIComponent(query)}`);
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || `Error: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            let html = '<ul>';
+            data.forEach(article => {
+                html += `<li>
+                    <strong>${article.title}</strong> (${article.source})<br>
+                    Sentiment: ${article.sentiment} (Score: ${article.sentiment_score})
+                    <a href="${article.url}" target="_blank" rel="noopener noreferrer">Read more</a>
+                </li>`;
+            });
+            html += '</ul>';
+            resultsDiv.innerHTML = html;
+        } else {
+            resultsDiv.innerHTML = '<p>No news sentiment found for this topic.</p>';
+        }
+    } catch (error) {
+        console.error("Failed to fetch news sentiment:", error);
+        resultsDiv.innerHTML = `<p>Error fetching news sentiment: ${error.message}</p>`;
+    }
+}
+</script>
+
+{% endblock %} 
